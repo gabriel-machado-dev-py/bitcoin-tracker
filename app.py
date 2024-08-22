@@ -22,7 +22,7 @@ CYAN = '\033[96m'
 RESET = '\033[0m'
 BOLD = '\033[1m'
 
-# Adding my own style to the project
+
 def simulate_loading_bar() -> None:
     """Simulate a loading bar with a progress indicator."""
     print(f"{GREEN}Loading program...{RESET}")
@@ -52,13 +52,11 @@ def simulate_loading_bar() -> None:
 
     ''' + RESET)
 
-# Configure logging in case of errors
 def configure_logging() -> None:
     """Configure logging settings."""
     logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
     sleep(1.5)
 
-# Fetch the current Bitcoin price from the CoinMarketCap API
 def fetch_bitcoin_price() -> float | None:
     """Fetch the current Bitcoin price from the CoinMarketCap API."""
     API_KEY: str | None = os.getenv('API_KEY')
@@ -82,7 +80,6 @@ def fetch_bitcoin_price() -> float | None:
         pprint(e)
     return None
 
-# Send an email notification with the current Bitcoin price
 def send_email(current_price: float, specified_price: float, recipient_email: str) -> None:
     """Send an email notification with the current Bitcoin price."""
     print(f"{YELLOW}Creating e-mail...{RESET}")
@@ -168,16 +165,18 @@ def send_email(current_price: float, specified_price: float, recipient_email: st
         logging.error(f"An unexpected error occurred while sending email: {e}")
         print(f"An unexpected error occurred while sending email: {e}")
 
-# Main function to track Bitcoin price and send email notifications
 def main() -> None:
     """Main function to track Bitcoin price and send email notifications."""
+
     specified_price = float(input("Please enter the price you want to track (USD): "))
     recipient_email: str = input("Please enter your e-mail address: ")
 
     print(f'{YELLOW}Verify if the email {recipient_email} is correct.{RESET}\n')
+
     valid_email = input('Is the email correct? (y/n): ')
     if valid_email.lower() == 'n':
         recipient_email = input('Please enter your e-mail address: ')
+
     print(f'{RED}{BOLD}If the email is incorrect, you will not receive the e-mail.{RESET}')
     sleep(5)
 
@@ -197,18 +196,18 @@ def main() -> None:
         print(f"{RED}{BOLD}Failed to fetch the current price of Bitcoin.{RESET}")
         sleep(5)
 
-# Schedule the email sending function to run at regular intervals (every 10 minutes)
 def schedule_email(min_time: int = 10) -> None:
     """Schedule the email sending function to run at regular intervals."""
     schedule.every(min_time).minutes.do(main)
 
-# Run the main function
+
 if __name__ == "__main__":
     load_dotenv()
     simulate_loading_bar()
     configure_logging()
     main()
     schedule_email()
+
     schedule_time: str = input("The bot is programmed to run every 10 minutes, do you wish to cancel or not? (y/n): ")
     if schedule_time.lower() == 'y':
         schedule.clear()
