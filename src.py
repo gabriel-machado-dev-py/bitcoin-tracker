@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import smtplib
 from email.message import EmailMessage
 from time import sleep
@@ -10,7 +11,6 @@ from dotenv import load_dotenv
 from pprint import pprint
 from requests import Session
 from requests.exceptions import ConnectionError, Timeout, RequestException
-from tqdm import tqdm
 
 # Colors
 RED = '\033[91m'
@@ -150,30 +150,42 @@ def verify_email() -> str:
     while True:
         email = input("Please enter your e-mail address: ")
         print("\n")
-        if "@" in email and "." in email:
+        if re.findall(r"@.{1,8}\.com", email) or re.findall(r"@.{1,8}\.com.br", email):
             return email
         print(f"{RED}{BOLD}Invalid e-mail address, please try again.{RESET}")
 
 def get_specified_price() -> str:
-  specified_price = input("Please enter the price you want to track (USD): ")
 
-  if specified_price == "" or specified_price == "0":
+  try:
+    specified_price = input("Please enter the price you want to track (USD): ")
+    # if the user enters a price with a comma or period, it will be removed
+    specified_price = specified_price.replace(",", "").replace(".", "")
+    specified_price = float(specified_price)
+
+    if specified_price <= 0:
       print(f"{RED}{BOLD}Please enter a valid price.{RESET}")
-      specified_price = input("Please enter the price you want to track (USD): " + "\n")
+      print(f'{YELLOW}Please, follow the instructions above!{RESET}\n')
 
-  return float(specified_price)
+      return get_specified_price()
+
+  except ValueError:
+    print(f"{RED}{BOLD}Please enter a valid price.{RESET}")
+    print(f'{YELLOW}Please, follow the instructions above!{RESET}\n')
+
+    return get_specified_price()
+
+  return specified_price
 
 def main() -> None:
     """Main function to track Bitcoin price and send email notifications."""
 
     print(f'{GREEN}{BOLD} Please, follow the instructions below to configure the Bitcoin price tracker.{RESET}\n')
-    print(f'{YELLOW} Enter the price in USD in the format without the dollar sign, example: {GREEN}{BOLD}50000{RESET}')
-    print(f'{YELLOW} Enter your e-mail in the format:{RESET} {GREEN}fulanodetal@gmail.com{RESET}\n')
+    print(f' Enter the price in USD in the format without the dollar sign, example: {GREEN}{BOLD}50000{RESET}')
+    print(f' Enter your e-mail in the format:{RESET} {GREEN}fulanodetal@gmail.com\n')
 
     specified_price = get_specified_price()
     recipient_email = verify_email()
     current_price = fetch_bitcoin_price()
-
 
     if current_price is not None:
         if current_price < specified_price:

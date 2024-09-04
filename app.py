@@ -21,6 +21,5 @@ if __name__ == "__main__":
             while True:
                 schedule.run_pending()
                 sleep(1)
-                print(f"{GREEN}{BOLD}The bot is running...{RESET}")
         else:
             print(f"{RED}{BOLD}Invalid option, please type 'yes' or 'no'.{RESET}")

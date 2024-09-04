@@ -38,12 +38,20 @@ Bitcoin Advanced Tracker is a Python application that tracks the price of Bitcoi
    ```sh
    pip install -r requirements.txt
    ```
-4. Create a `.env` file in the root directory and add your API key and email credentials:
+4. Create a `.env` file in the root directory and add your API key and email credentials.
+``
 
    ```env
    API_KEY=your_coinmarketcap_api_key
    EMAIL_USER=your_email@example.com
    EMAIL_PASSWORD=your_email_password
+   ```
+5. To get your e-mail password, follow the steps above.
+   ```
+   1. Go to your e-mail
+   2. Go to: manage your google account
+   3. Search for App password and create one
+   4. Copy the code and paste it on your EMAIL_PASSWORD
    ```
 
 * [ ] Usage
