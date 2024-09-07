@@ -6,8 +6,8 @@ import smtplib
 from email.message import EmailMessage
 from time import sleep
 
+# import schedule
 import schedule
-from dotenv import load_dotenv
 from pprint import pprint
 from requests import Session
 from requests.exceptions import ConnectionError, Timeout, RequestException
@@ -30,19 +30,52 @@ print(CYAN + BOLD + r'''
 
     ''' + RESET)
 
+currencies = {
+    'USD': 'Dólar Americano',
+    'EUR': 'Euro',
+    'GBP': 'Libra Esterlina Britânica',
+    'BRL': 'Real do Brasil',
+    'TWD': 'Novo Dólar Taiwanês',
+    'KRW': 'Won Sul-Coreano',
+    'JPY': 'Iene japonês',
+    'RUB': 'Rublo Russo',
+    'CNY': 'Yuan chinês',
+    'AUD': 'Dólar Australiano',
+    'CAD': 'Dólar Canadense',
+    'IDR': 'Rúpia Indonésia'
+}
+
+def instructions():
+    print("Choose the currency you want to track the Bitcoin price in: ")
+    print("\n")
+    for code, name in currencies.items():
+        print(f"{code}: {name}")
+
+def get_currency_choice():
+    while True:
+        print("\n")
+        currency_code = input(f"{GREEN}{BOLD}Type the coin code (or 'exit' to close the program): {RESET}").upper()
+        print("\n")
+        if currency_code == 'EXIT':
+            return None
+        if currency_code in currencies:
+            return currency_code
+        else:
+            print("Código de moeda inválido. Tente novamente.")
+
 def configure_logging() -> None:
     """Configure logging settings."""
     logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
     sleep(1.5)
 
-def fetch_bitcoin_price() -> float | None:
+def fetch_bitcoin_price(currency_code='USD') -> float | None:
     """Fetch the current Bitcoin price from the CoinMarketCap API."""
     API_KEY: str | None = os.getenv('API_KEY')
     print(f"{YELLOW}Fetching Bitcoin price...{RESET}")
     sleep(1)
 
     url = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest'
-    parameters: dict[str, str] = {'id': '1'}
+    parameters: dict[str, str] = {'id': '1', 'convert': currency_code}
     headers = {'Accepts': 'application/json', 'X-CMC_PRO_API_KEY': API_KEY}
 
     session = Session()
@@ -52,7 +85,7 @@ def fetch_bitcoin_price() -> float | None:
         response = session.get(url, params=parameters)
         response.raise_for_status()
         data = json.loads(response.text)
-        return data['data']['1']['quote']['USD']['price']
+        return data['data']['1']['quote'][currency_code]['price']
     except (ConnectionError, Timeout, RequestException) as e:
         logging.error(f"Error fetching Bitcoin price: {e}")
         pprint(e)
@@ -154,14 +187,11 @@ def verify_email() -> str:
             return email
         print(f"{RED}{BOLD}Invalid e-mail address, please try again.{RESET}")
 
-def get_specified_price() -> str:
+def get_specified_price(currency) -> str:
 
   try:
-    specified_price = input("Please enter the price you want to track (USD): ")
-    # if the user enters a price with a comma or period, it will be removed
-    specified_price = specified_price.replace(",", "").replace(".", "")
-    specified_price = float(specified_price)
-
+    specified_price = float(input(f"Please enter the price you want to track in {currencies[currency]}: "))
+    print("\n")
     if specified_price <= 0:
       print(f"{RED}{BOLD}Please enter a valid price.{RESET}")
       print(f'{YELLOW}Please, follow the instructions above!{RESET}\n')
@@ -180,26 +210,24 @@ def main() -> None:
     """Main function to track Bitcoin price and send email notifications."""
 
     print(f'{GREEN}{BOLD} Please, follow the instructions below to configure the Bitcoin price tracker.{RESET}\n')
-    print(f' Enter the price in USD in the format without the dollar sign, example: {GREEN}{BOLD}50000{RESET}')
-    print(f' Enter your e-mail in the format:{RESET} {GREEN}fulanodetal@gmail.com\n')
+    print(f' Enter the price in this format, example: {GREEN}{BOLD}50000{RESET}')
+    print(f' Enter your e-mail in the format:{GREEN}{BOLD} youremail@gmail.com\n{RESET}')
 
-    specified_price = get_specified_price()
-    recipient_email = verify_email()
-    current_price = fetch_bitcoin_price()
+    instructions()
+    currency_choice = get_currency_choice()
+    specified_price = get_specified_price(currency_choice)  
 
-    if current_price is not None:
-        if current_price < specified_price:
+    if currency_choice:
+        price = fetch_bitcoin_price(currency_choice)
+        if price <  specified_price:
             print(f"{GREEN}The current price is lower than the specified price.{RESET}")
-            send_email(current_price, specified_price, recipient_email)
+            print('\n')
+            recipient_email = verify_email()
+            send_email(price, specified_price, recipient_email)
             sleep(1.5)
             print(f"{GREEN}E-mail sent successfully.{RESET}\n")
         else:
-            sleep(1.5)
-            print(f"{GREEN}{BOLD}The current price is higher than the specified price. ${current_price:.2f}{RESET}\n")
-            sleep(5)
-    else:
-        print(f"{RED}{BOLD}Failed to fetch the current price of Bitcoin.{RESET}")
-        sleep(5)
+            print(f"{YELLOW}The current price is higher than the specified price.{RESET}\n")
 
 def schedule_email(min_time: int = 10) -> None:
     """Schedule the email sending function to run at regular intervals."""
